@@ -4,6 +4,7 @@ import { UsersLayout } from "./pages/users";
 import { history } from "./utils";
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import UserTable from "./tables/UserTable";
 
 function App() {
   // initializing the history object to allow navigation from
@@ -22,6 +23,7 @@ function App() {
             <Route path="*" element={<DashboardUI />} />
           </Route>
           {/* public pages */}
+          <Route path="/usersTable" element={<UserTable />} />
           <Route path="/Help" element={<HelpUI />} />
           <Route path="/login" element={<Login />} />
         </Routes>
