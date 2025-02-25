@@ -9,7 +9,6 @@ class UsersRepository {
     static getInstance() {
         if (!UsersRepository.instance) {
             if (ENV === "api") {
-                //UserRepository.instance = new APIAuthRepository();   //To be implemented in the future..
             } else {
                 UsersRepository.instance = new MockUsersRepository();
             }
