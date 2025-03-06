@@ -5,6 +5,7 @@ import { history } from "./utils";
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import UserTable from "./tables/UserTable";
+import DocumentUpload from "./components/DocumentUpload";
 
 function App() {
   // initializing the history object to allow navigation from
@@ -20,6 +21,7 @@ function App() {
           <Route element={<PrivateRoute />}>
             <Route path="/dashboard" element={<DashboardUI />} />
             <Route path="/users/*" element={<UsersLayout />} />
+            <Route path="/upload" element={<DocumentUpload />} />
             <Route path="*" element={<DashboardUI />} />
           </Route>
           {/* public pages */}
