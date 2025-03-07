@@ -3,3 +3,4 @@ export * from "./Help";
 export * from "./Dashboard";
 export * from "./PrivateRoute";
 export * from "./DocumentUpload";
+export * from "./BrandSection";
