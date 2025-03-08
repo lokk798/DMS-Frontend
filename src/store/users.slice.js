@@ -2,11 +2,6 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import UsersRepository from "../repository/users/UsersRepository";
 
-/**
- * @todo - Understand this file line by line.
- *       - Mutations, spread operation,
- */
-
 const UsersRepositoryInstance = UsersRepository.getInstance();
 // create slice
 

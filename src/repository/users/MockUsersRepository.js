@@ -1,9 +1,5 @@
 import IUsersRepository from "./IUsersRepository";
 
-/**
- * @todo Data Mutation.
- */
-
 class MockUsersRepository extends IUsersRepository {
   static data = [];
   static nextId = 1;
