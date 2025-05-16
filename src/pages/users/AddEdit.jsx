@@ -45,9 +45,7 @@ function AddEdit() {
   async function onSubmit(data) {
     try {
       console.log("Form data submitted:", data);
-
-      const token =
-        "eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJBRE1JTiJdLCJzdWIiOiJhZG1pbiIsImlhdCI6MTc0NzQxOTc2NCwiZXhwIjoxNzQ3NTA2MTY0fQ.pJfnMBrYOb4s0WVAr9kdW17cQtmXuETPSQW6Lwj40uHwz1s6Mtrql-ZATm88jAJLOMLhWQsZ15SEw_h3f0HgfA";
+      const token = localStorage.getItem("token");
       if (!token) {
         alert("Admin token not found, please login as admin.");
         return;
@@ -91,7 +89,6 @@ function AddEdit() {
       alert(`Registration error: ${error.message}`);
     }
   }
-
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
       <div className="w-full max-w-2xl mx-auto my-12 px-6">
