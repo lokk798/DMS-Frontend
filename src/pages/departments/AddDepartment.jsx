@@ -5,14 +5,17 @@ export default function AddDepartment() {
   const [name, setName] = useState("");
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null); // Reset error state
     try {
+      const token = localStorage.getItem("token"); // Retrieve the JWT from local storage
       const response = await fetch("/api/departments", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // Include the JWT in the Authorization header
+        },
         body: JSON.stringify({ name }),
       });
 

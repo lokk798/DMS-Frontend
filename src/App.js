@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
-import { Login, HelpUI, DashboardUI, PrivateRoute } from "./components";
+import { HelpUI, DashboardUI, PrivateRoute } from "./components";
+import Login from "./components/Login";
 import { UsersLayout } from "./pages/users";
 import { history } from "./utils";
 import React from "react";
@@ -9,6 +10,7 @@ import DocumentUpload from "./components/DocumentUpload";
 import DocumentTable from "./tables/documents/DocumentTable";
 import AddDepartment from "./pages/departments/AddDepartment";
 import AddCategory from "./pages/categories/AddCategory";
+import ListDepartments from "./pages/departments/ListDepartments";
 
 function App() {
   // initializing the history object to allow navigation from
@@ -25,6 +27,8 @@ function App() {
             <Route path="/dashboard" element={<DashboardUI />} />
             <Route path="/users/*" element={<UsersLayout />} />
             <Route path="/departments/add" element={<AddDepartment />} />
+            <Route path="/departments" element={<ListDepartments />} />
+
             <Route path="/categories/add" element={<AddCategory />} />
 
             <Route path="/upload" element={<DocumentUpload />} />

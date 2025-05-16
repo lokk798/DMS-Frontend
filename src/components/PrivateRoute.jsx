@@ -1,13 +1,14 @@
-import { Navigate, Outlet } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { Navigate, Outlet } from "react-router-dom";
 
-export { PrivateRoute };
+export function PrivateRoute() {
+  // Check if the token exists in localStorage
+  const token = localStorage.getItem("token");
 
-function PrivateRoute() {
-    const auth = useSelector(x => x.auth.value);
-    if (!auth) {
-        return <Navigate to="/login"  />
-    }
+  // If no token is found, redirect to the login page
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
 
-    return <Outlet />;
+  // If the token exists, allow access to the private route
+  return <Outlet />;
 }

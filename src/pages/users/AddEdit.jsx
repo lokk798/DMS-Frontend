@@ -42,20 +42,53 @@ function AddEdit() {
       }
     }
   }, [id, reset, users]);
-
   async function onSubmit(data) {
     try {
-      if (id) {
-        await dispatch(
-          userActions.updateUser({ id: parseInt(id), ...data })
-        ).unwrap();
-      } else {
-        await dispatch(userActions.addUser(data)).unwrap();
+      console.log("Form data submitted:", data);
+
+      const token =
+        "eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJBRE1JTiJdLCJzdWIiOiJhZG1pbiIsImlhdCI6MTc0NzQxOTc2NCwiZXhwIjoxNzQ3NTA2MTY0fQ.pJfnMBrYOb4s0WVAr9kdW17cQtmXuETPSQW6Lwj40uHwz1s6Mtrql-ZATm88jAJLOMLhWQsZ15SEw_h3f0HgfA";
+      if (!token) {
+        alert("Admin token not found, please login as admin.");
+        return;
+      }
+      console.log("Admin token retrieved:", token);
+
+      const payload = {
+        username: data.username,
+        password: data.password,
+        email: data.email || `${data.username}@example.com`,
+        roles: [data.role.toUpperCase()],
+        departments: [data.department],
+        token: token,
+      };
+
+      console.log("Payload to send:", payload);
+
+      const response = await fetch("http://localhost:8080/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+        mode: "cors", // important for CORS
+        // credentials: "include", // uncomment if backend needs cookies/auth headers
+      });
+
+      console.log("Response status:", response.status);
+
+      const result = await response.json();
+      console.log("Response JSON:", result);
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to register user");
       }
 
-      history.navigate("/dashboard");
+      alert("User registered successfully!");
+      history.navigate("/dashboard"); // your navigation logic
     } catch (error) {
-      console.error("Error submitting form:", error);
+      console.error("Registration error:", error.message);
+      alert(`Registration error: ${error.message}`);
     }
   }
 

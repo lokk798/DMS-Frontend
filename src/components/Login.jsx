@@ -1,32 +1,98 @@
-import { Link } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import * as Yup from "yup";
-import { useDispatch } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { authActions } from "../store";
 import BrandSection from "./BrandSection";
-export { Login };
 
-function Login() {
-  const dispatch = useDispatch();
+export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
-
-  // form validation rules
-  const validationSchema = Yup.object().shape({
-    username: Yup.string().required("Username is required"),
-    password: Yup.string().required("Password is required"),
+  const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
   });
-  const formOptions = { resolver: yupResolver(validationSchema) };
+  const [formErrors, setFormErrors] = useState({
+    username: null,
+    password: null,
+  });
+  const navigate = useNavigate();
 
-  // get functions to build form with useForm() hook
-  const { register, handleSubmit, formState } = useForm(formOptions);
-  const { errors, isSubmitting } = formState;
+  // Handle input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
 
-  function onSubmit({ username, password }) {
-    console.log("________________Hello 1 ");
-    return dispatch(authActions.login({ username, password }));
-  }
+    // Clear error when typing
+    if (formErrors[name]) {
+      setFormErrors({
+        ...formErrors,
+        [name]: null,
+      });
+    }
+  };
+
+  // Validate form
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.username.trim()) {
+      errors.username = "Username is required";
+    }
+    if (!formData.password) {
+      errors.password = "Password is required";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8080";
+
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Invalid username or password");
+      }
+
+      const data = await response.json();
+      console.log("Login response:", data);
+
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+        console.log("Login successful, redirecting to dashboard...");
+        navigate("/dashboard");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError(err.message || "Login failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Toggle password visibility
   const togglePasswordVisibility = () => {
@@ -41,7 +107,7 @@ function Login() {
       {/* Right Side - Login Form */}
       <div className="w-full md:w-3/5 bg-gradient-to-br from-gray-50 to-slate-100 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
-          {/* Mobile Logo (visible only on small screens) */}
+          {/* Mobile Logo */}
           <div className="md:hidden w-12 h-12 rounded-xl bg-indigo-600 mx-auto mb-6 flex items-center justify-center">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -68,7 +134,14 @@ function Login() {
               <p className="text-slate-500 mt-2">Sign in to your account</p>
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Show error message if any */}
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+                <p className="text-sm font-medium">{error}</p>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Username Input */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -93,18 +166,20 @@ function Login() {
                   </div>
                   <input
                     type="text"
-                    {...register("username")}
+                    name="username"
+                    value={formData.username}
+                    onChange={handleInputChange}
                     className={`w-full pl-10 pr-4 py-3 text-slate-700 bg-slate-50/50 border ${
-                      errors.username
+                      formErrors.username
                         ? "border-red-400 ring-1 ring-red-400"
                         : "border-slate-200 group-hover:border-indigo-300"
                     } rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all duration-200`}
                     placeholder="Enter your username"
                   />
                 </div>
-                {errors.username && (
+                {formErrors.username && (
                   <p className="text-red-500 text-sm mt-1 font-medium">
-                    {errors.username.message}
+                    {formErrors.username}
                   </p>
                 )}
               </div>
@@ -141,9 +216,11 @@ function Login() {
                   </div>
                   <input
                     type={showPassword ? "text" : "password"}
-                    {...register("password")}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
                     className={`w-full pl-10 pr-12 py-3 text-slate-700 bg-slate-50/50 border ${
-                      errors.password
+                      formErrors.password
                         ? "border-red-400 ring-1 ring-red-400"
                         : "border-slate-200 group-hover:border-indigo-300"
                     } rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all duration-200`}
@@ -193,9 +270,9 @@ function Login() {
                     )}
                   </button>
                 </div>
-                {errors.password && (
+                {formErrors.password && (
                   <p className="text-red-500 text-sm mt-1 font-medium">
-                    {errors.password.message}
+                    {formErrors.password}
                   </p>
                 )}
               </div>
