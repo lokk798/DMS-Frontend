@@ -7,6 +7,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import UserTable from "./tables/users/UserTable";
 import DocumentUpload from "./components/DocumentUpload";
 import DocumentTable from "./tables/documents/DocumentTable";
+import AddDepartment from "./pages/departments/AddDepartment";
+import AddCategory from "./pages/categories/AddCategory";
 
 function App() {
   // initializing the history object to allow navigation from
@@ -22,6 +24,9 @@ function App() {
           <Route element={<PrivateRoute />}>
             <Route path="/dashboard" element={<DashboardUI />} />
             <Route path="/users/*" element={<UsersLayout />} />
+            <Route path="/departments/add" element={<AddDepartment />} />
+            <Route path="/categories/add" element={<AddCategory />} />
+
             <Route path="/upload" element={<DocumentUpload />} />
             <Route path="/usersTable" element={<UserTable />} />
             <Route path="/documentsTable" element={<DocumentTable />} />
