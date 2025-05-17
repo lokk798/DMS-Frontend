@@ -255,9 +255,9 @@ const DocumentUpload = () => {
                   } focus:outline-none focus:ring-2 transition-colors`}
                 >
                   <option value="">Select Category</option>
-                  <option value="1">Category 1</option>
-                  <option value="2">Category 2</option>
-                  <option value="3">Category 3</option>
+                  <option value="1">General</option>
+                  <option value="2">Administrative</option>
+                  <option value="3">Training</option>
                 </select>
                 {errors.category && (
                   <p className="mt-1.5 text-sm text-red-600">
