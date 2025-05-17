@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 const DocumentUpload = () => {
@@ -6,20 +6,52 @@ const DocumentUpload = () => {
   const [dragging, setDragging] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
-    description: "",
     category: "",
+    department: "",
   });
+  const [departments, setDepartments] = useState([]); // To store department options
   const [errors, setErrors] = useState({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // Fetch departments (if needed)
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("You must be logged in to upload a document.");
+          return;
+        }
+
+        const response = await fetch("http://localhost:8080/api/departments", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch departments.");
+        }
+
+        const data = await response.json();
+        setDepartments(data);
+      } catch (error) {
+        console.error("Error fetching departments:", error);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
 
   // Form validation
   const validateForm = () => {
     const newErrors = {};
 
     if (!formData.title.trim()) newErrors.title = "Title is required";
-    if (!formData.description.trim())
-      newErrors.description = "Description is required";
     if (!formData.category.trim()) newErrors.category = "Category is required";
+    if (!formData.department.trim())
+      newErrors.department = "Department is required";
     if (!uploadedFile) newErrors.file = "You must upload a file";
     else {
       if (uploadedFile.size > 2 * 1024 * 1024)
@@ -66,11 +98,66 @@ const DocumentUpload = () => {
   };
 
   // Form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      console.log("Metadata:", { ...formData, file: uploadedFile });
+    if (!validateForm()) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("userId");
+      if (!token || !userId) {
+        alert("You must be logged in to upload a document.");
+        return;
+      }
+
+      // Step 1: Create the document metadata
+      const metadataResponse = await fetch(
+        `http://localhost:8080/api/documents?userId=${userId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            title: formData.title,
+            category: { id: formData.category }, // Category ID
+            department: { id: formData.department }, // Department ID
+          }),
+        }
+      );
+
+      if (!metadataResponse.ok) {
+        throw new Error("Failed to create document metadata.");
+      }
+
+      const document = await metadataResponse.json();
+
+      // Step 2: Upload the file
+      const formDataObj = new FormData();
+      formDataObj.append("file", uploadedFile);
+
+      const fileResponse = await fetch(
+        `http://localhost:8080/api/documents/upload?documentId=${document.id}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formDataObj,
+        }
+      );
+
+      if (!fileResponse.ok) {
+        throw new Error("Failed to upload the document file.");
+      }
+
       setIsSubmitted(true);
+    } catch (error) {
+      console.error("Error uploading document:", error);
+      alert(
+        "An error occurred while uploading the document. Please try again."
+      );
     }
   };
 
@@ -101,20 +188,6 @@ const DocumentUpload = () => {
             /* Success Message */
             <div className="text-center">
               <div className="bg-green-100 text-green-700 p-4 rounded-xl mb-6">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-12 w-12 mx-auto mb-4 text-green-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
                 <h3 className="text-xl font-bold mb-2">Document Uploaded!</h3>
                 <p>Your document has been successfully uploaded.</p>
               </div>
@@ -128,7 +201,12 @@ const DocumentUpload = () => {
                 <button
                   onClick={() => {
                     setIsSubmitted(false);
-                    setFormData({ title: "", description: "", category: "" });
+                    setFormData({
+                      title: "",
+                      description: "",
+                      category: "",
+                      department: "",
+                    });
                     setUploadedFile(null);
                   }}
                   className="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 px-4 rounded-xl shadow-lg hover:shadow-slate-500/20 transform hover:-translate-y-0.5 transition-all duration-200"
@@ -139,81 +217,94 @@ const DocumentUpload = () => {
             </div>
           ) : (
             /* Upload Form */
-            <>
-              <div className="mb-8 text-center">
-                <h2 className="text-3xl font-bold text-slate-800">
-                  Upload Document
-                </h2>
-                <p className="text-slate-500 mt-2">
-                  Add a new document to the system
-                </p>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Title Field */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 rounded-lg border ${
+                    errors.title
+                      ? "border-red-300 bg-red-50 focus:ring-red-500 focus:border-red-500"
+                      : "border-slate-300 focus:ring-indigo-500 focus:border-indigo-500"
+                  } focus:outline-none focus:ring-2 transition-colors`}
+                />
+                {errors.title && (
+                  <p className="mt-1.5 text-sm text-red-600">{errors.title}</p>
+                )}
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Title Field */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Document Title
-                  </label>
-                  <input
-                    type="text"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleInputChange}
-                    placeholder="Enter document title"
-                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
-                  />
-                  {errors.title && (
-                    <p className="text-red-500 text-sm mt-1">{errors.title}</p>
-                  )}
-                </div>
+              {/* Category Field */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Category
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 rounded-lg border ${
+                    errors.category
+                      ? "border-red-300 bg-red-50 focus:ring-red-500 focus:border-red-500"
+                      : "border-slate-300 focus:ring-indigo-500 focus:border-indigo-500"
+                  } focus:outline-none focus:ring-2 transition-colors`}
+                >
+                  <option value="">Select Category</option>
+                  <option value="1">Category 1</option>
+                  <option value="2">Category 2</option>
+                  <option value="3">Category 3</option>
+                </select>
+                {errors.category && (
+                  <p className="mt-1.5 text-sm text-red-600">
+                    {errors.category}
+                  </p>
+                )}
+              </div>
 
-                {/* Description Field */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Description
-                  </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    placeholder="Enter document description"
-                    rows="3"
-                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
-                  />
-                  {errors.description && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.description}
-                    </p>
-                  )}
-                </div>
+              {/* Department Field */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Department
+                </label>
+                <select
+                  name="department"
+                  value={formData.department}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 rounded-lg border ${
+                    errors.department
+                      ? "border-red-300 bg-red-50 focus:ring-red-500 focus:border-red-500"
+                      : "border-slate-300 focus:ring-indigo-500 focus:border-indigo-500"
+                  } focus:outline-none focus:ring-2 transition-colors`}
+                >
+                  <option value="">Select Department</option>
+                  {departments.map((dept) => (
+                    <option key={dept.id} value={dept.id}>
+                      {dept.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.department && (
+                  <p className="mt-1.5 text-sm text-red-600">
+                    {errors.department}
+                  </p>
+                )}
+              </div>
 
-                {/* Category Field */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Category
-                  </label>
-                  <input
-                    type="text"
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    placeholder="Enter category"
-                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
-                  />
-                  {errors.category && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.category}
-                    </p>
-                  )}
-                </div>
-
-                {/* File Upload Area */}
+              {/* File Upload Field */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Upload File
+                </label>
                 <div
-                  className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all ${
+                  className={`border-2 border-dashed rounded-lg p-4 text-center ${
                     dragging
                       ? "border-indigo-500 bg-indigo-50"
-                      : "border-slate-300 hover:border-indigo-400 hover:bg-slate-50"
+                      : "border-slate-300 bg-slate-50"
                   }`}
                   onDragOver={(e) => {
                     e.preventDefault();
@@ -222,126 +313,42 @@ const DocumentUpload = () => {
                   onDragLeave={() => setDragging(false)}
                   onDrop={onDrop}
                 >
+                  <p className="text-slate-500">
+                    Drag and drop your file here, or{" "}
+                    <span className="text-indigo-600 font-medium">browse</span>
+                  </p>
                   <input
                     type="file"
-                    accept=".pdf,.doc,.docx"
+                    onChange={handleFileChange}
                     className="hidden"
                     id="fileInput"
-                    onChange={handleFileChange}
                   />
-
-                  <div className="bg-indigo-100 p-3 rounded-lg mb-4">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-8 w-8 text-indigo-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                      />
-                    </svg>
-                  </div>
-
                   <label
                     htmlFor="fileInput"
-                    className="cursor-pointer text-center"
+                    className="cursor-pointer text-indigo-600 font-medium"
                   >
-                    <p className="text-slate-700 font-medium">
-                      Drag & Drop your file here
-                    </p>
-                    <p className="text-slate-500 text-sm mt-1">
-                      or click to select a file
-                    </p>
-                    <p className="text-xs text-slate-400 mt-2">
-                      Supported formats: PDF, DOC, DOCX (Max: 2MB)
-                    </p>
+                    Choose a file
                   </label>
                 </div>
-
-                {/* Show file name if uploaded */}
                 {uploadedFile && (
-                  <div className="bg-slate-50/50 rounded-xl p-4 border border-slate-200 flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="bg-indigo-100 p-2 rounded-lg mr-3">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5 text-indigo-600"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                          />
-                        </svg>
-                      </div>
-                      <div className="truncate">
-                        <p className="text-sm font-medium text-slate-800 truncate">
-                          {uploadedFile.name}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          {(uploadedFile.size / 1024).toFixed(2)} KB
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setUploadedFile(null)}
-                      className="p-1 rounded-full hover:bg-slate-200"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 text-slate-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
+                  <p className="mt-2 text-sm text-slate-600">
+                    Selected file: {uploadedFile.name}
+                  </p>
                 )}
-
                 {errors.file && (
-                  <p className="text-red-500 text-sm">{errors.file}</p>
+                  <p className="mt-1.5 text-sm text-red-600">{errors.file}</p>
                 )}
+              </div>
 
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-xl shadow-lg hover:shadow-indigo-500/30 transform hover:-translate-y-0.5 transition-all duration-200"
-                >
-                  Upload Document
-                </button>
-
-                {/* Back Link */}
-                <Link
-                  to="../dashboard"
-                  className="w-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 px-4 rounded-xl shadow-md hover:shadow-slate-300/30 transform hover:-translate-y-0.5 transition-all duration-200"
-                >
-                  Back to Dashboard
-                </Link>
-              </form>
-            </>
+              {/* Submit Button */}
+              <button
+                type="submit"
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-xl shadow-lg hover:shadow-indigo-500/30 transform hover:-translate-y-0.5 transition-all duration-200"
+              >
+                Upload Document
+              </button>
+            </form>
           )}
-        </div>
-
-        {/* Security note */}
-        <div className="text-center mt-6 text-xs text-slate-500">
-          <p>© 2025 Enterprise DMS • All rights reserved</p>
         </div>
       </div>
     </div>

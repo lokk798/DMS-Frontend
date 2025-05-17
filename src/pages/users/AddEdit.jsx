@@ -54,7 +54,7 @@ function AddEdit() {
       const payload = {
         username: data.username,
         password: data.password,
-        email: data.email || `${data.username}@example.com`,
+        email: data.email || `${data.username}l@ensia.dz`,
         roles: [data.role.toUpperCase()],
         departments: null,
         token: token,

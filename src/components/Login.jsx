@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import BrandSection from "./BrandSection";
+import { getDashboardPath } from "../utils/roleUtils";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -83,8 +84,17 @@ export default function Login() {
 
       if (data.token) {
         localStorage.setItem("token", data.token);
-        console.log("Login successful, redirecting to dashboard...");
-        navigate("/dashboard");
+
+        localStorage.setItem("userId", formData.username);
+
+        // Extract user role from token
+        const tokenPayload = JSON.parse(atob(data.token.split(".")[1]));
+        const userRole = tokenPayload.role;
+
+        // Redirect to the appropriate dashboard
+        const dashboardPath = getDashboardPath(userRole);
+        console.log("Login successful, redirecting to:", dashboardPath);
+        navigate(dashboardPath);
       }
     } catch (err) {
       console.error("Login error:", err);
