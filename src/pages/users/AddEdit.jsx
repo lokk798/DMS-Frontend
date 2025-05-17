@@ -26,7 +26,6 @@ function AddEdit() {
     role: Yup.string()
       .oneOf(["user", "admin"], "Invalid role")
       .required("Role is required"),
-    department: Yup.string().required("Department is required"),
   });
 
   const formOptions = { resolver: yupResolver(validationSchema) };
@@ -57,7 +56,7 @@ function AddEdit() {
         password: data.password,
         email: data.email || `${data.username}@example.com`,
         roles: [data.role.toUpperCase()],
-        departments: [data.department],
+        departments: null,
         token: token,
       };
 
@@ -216,24 +215,6 @@ function AddEdit() {
               {errors.password && (
                 <p className="mt-1.5 text-sm text-red-600">
                   {errors.password.message}
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Department
-              </label>
-              <input
-                {...register("department")}
-                className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.department
-                    ? "border-red-300 bg-red-50 focus:ring-red-500 focus:border-red-500"
-                    : "border-slate-300 focus:ring-indigo-500 focus:border-indigo-500"
-                } focus:outline-none focus:ring-2 transition-colors`}
-              />
-              {errors.department && (
-                <p className="mt-1.5 text-sm text-red-600">
-                  {errors.department.message}
                 </p>
               )}
             </div>

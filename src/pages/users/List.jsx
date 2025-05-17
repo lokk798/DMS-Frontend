@@ -94,6 +94,27 @@ function List() {
           </svg>
           Add Category
         </Link>
+
+        <Link
+          to="/departments"
+          className="bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-4 rounded-xl shadow-lg hover:shadow-teal-500/30 transform hover:-translate-y-0.5 transition-all duration-200 flex items-center"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 10h11M9 21V3m0 0L3 10m6-7l6 7"
+            />
+          </svg>
+          List Departments
+        </Link>
       </div>
 
       <div className="overflow-x-auto bg-white/90 backdrop-blur-sm shadow-xl rounded-2xl border border-white/20">

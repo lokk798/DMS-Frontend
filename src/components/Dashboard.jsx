@@ -10,7 +10,14 @@ function DashboardUI() {
   const dispatch = useDispatch();
 
   const handleLogout = () => {
-    return dispatch(authActions.logout());
+    // Clear the token from localStorage
+    localStorage.removeItem("token");
+
+    // Optionally clear Redux state if you're using Redux
+    dispatch(authActions.logout());
+
+    // Redirect to the login page
+    window.location.href = "/login";
   };
 
   return (

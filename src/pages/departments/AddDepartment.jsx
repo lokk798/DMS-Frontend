@@ -2,31 +2,40 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function AddDepartment() {
-  const [name, setName] = useState("");
-  const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  const [name, setName] = useState(""); // State for department name
+  const [error, setError] = useState(null); // State for error messages
+  const navigate = useNavigate(); // Navigation hook
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null); // Reset error state
+
     try {
-      const token = localStorage.getItem("token"); // Retrieve the JWT from local storage
-      const response = await fetch("/api/departments", {
+      // Retrieve the token from localStorage
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No token found. Please log in as an admin.");
+      }
+
+      // Make the API request
+      const response = await fetch("http://localhost:8080/api/departments", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Include the JWT in the Authorization header
+          Authorization: `Bearer ${token}`, // Include the token in the Authorization header
         },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name }), // Send the department name in the request body
       });
 
       if (!response.ok) {
-        throw new Error("Failed to add department");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to add department");
       }
 
       // Redirect to the departments list page after successful creation
       navigate("/departments");
     } catch (err) {
-      setError(err.message);
+      setError(err.message); // Set error message
       console.error("Error adding department:", err);
     }
   };

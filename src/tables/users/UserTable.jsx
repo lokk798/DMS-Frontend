@@ -19,12 +19,22 @@ const UserTable = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.post(
-        `http://localhost:5000/api/users?page=${page}&per_page=${perPage}&sort_by=${sortBy}&order=${order}`,
-        { filters } // Send filters as an array inside an object with 'filters' key
-      );
-      setUsers(response.data.data);
-      setTotalPages(response.data.pagination.total_pages);
+      // Retrieve the token from localStorage
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("No token found. Please log in.");
+        return;
+      }
+
+      // Make the API request
+      const response = await axios.get("http://localhost:8080/auth/users", {
+        headers: {
+          Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+        },
+      });
+
+      // Update the state with the fetched users
+      setUsers(response.data);
     } catch (error) {
       console.error("Error fetching users:", error);
     }
